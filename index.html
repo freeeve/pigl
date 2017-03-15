@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>monte carlo pi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        color: #ffffff;
+        background-color: #000000;
+        margin: 0px;
+        overflow: hidden;
+      }
+      #info {
+        position: absolute;
+        top: 0px;
+        width: 100%;
+        padding: 5px;
+        font-family: Monospace;
+        font-size: 15px;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <div id="info">monte carlo pi calculation in webgl by Eve <br/>
+      pi: <span id="pi"></span>, circlePoints: <span id="circle"></span>, squarePoints: <span id="square"></span><br/>
+      pi = 4 * circlePoints / squarePoints
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <script>
+var RADIUS = 200;
+var MAX_PARTICLES = 5000000;
+var COUNT_PER_LOOP = 1000;
+var renderer, scene, camera;
+
+var raycaster, intersects;
+var mouse, INTERSECTED;
+
+var circleCount = 0;
+var squareCount = 0;
+var totalCount = 0;
+
+var circleGeometry = new THREE.BufferGeometry();
+var circlePositions = new Float32Array( MAX_PARTICLES * 3 );
+
+var squareGeometry = new THREE.BufferGeometry();
+var squarePositions = new Float32Array( MAX_PARTICLES/2 * 3 );
+
+var purple = new THREE.Color( 0x880088 );
+var green = new THREE.Color( 0x008800 );
+var squareMaterial = new THREE.PointsMaterial({color:green});
+var circleMaterial = new THREE.PointsMaterial({color:purple});
+
+init();
+animate();
+
+function addNewPoint() {
+  var x = ( Math.random() * 2 - 1 ) * RADIUS;
+  var y = ( Math.random() * 2 - 1 ) * RADIUS;
+
+  if(Math.sqrt(x * x + y * y) <= RADIUS) {
+    var i3 = circleCount * 3;
+    circlePositions[ i3 + 0 ] = x;
+    circlePositions[ i3 + 1 ] = y;
+    circlePositions[ i3 + 2 ] = 0;
+    circleCount++;
+  } else {
+    var i3 = squareCount * 3;
+    squarePositions[ i3 + 0 ] = x;
+    squarePositions[ i3 + 1 ] = y;
+    squarePositions[ i3 + 2 ] = 0;
+    squareCount++;
+  }
+
+  circleGeometry.setDrawRange(0, circleCount);
+  squareGeometry.setDrawRange(0, squareCount);
+
+  totalCount++;
+}
+
+function init() {
+  container = document.getElementById( 'container' );
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+  camera.position.z = RADIUS * 2.5;
+
+  for(var i = 0; i < COUNT_PER_LOOP; i++) {
+    addNewPoint();
+  }
+
+  circleGeometry.addAttribute( 'position', new THREE.BufferAttribute( circlePositions, 3 ) );
+  squareGeometry.addAttribute( 'position', new THREE.BufferAttribute( squarePositions, 3 ) );
+
+  circlePoints = new THREE.Points( circleGeometry, circleMaterial );
+  squarePoints = new THREE.Points( squareGeometry, squareMaterial );
+  scene.add( circlePoints );
+  scene.add( squarePoints );
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  container.appendChild( renderer.domElement );
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  window.addEventListener( 'resize', onWindowResize, false );
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate() {
+  if(circleCount < MAX_PARTICLES) {
+    requestAnimationFrame( animate );
+  }
+  render();
+}
+
+var theta = 0;
+
+function render() {
+
+  theta += 0.1;
+  var radius = RADIUS * 2.5;
+  camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
+  camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
+  camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
+  camera.lookAt( scene.position );
+  camera.updateMatrixWorld();
+
+  for(var i = 0; i < COUNT_PER_LOOP; i++) {
+    addNewPoint();
+  }
+
+  circleGeometry.attributes.position.needsUpdate = true;
+  squareGeometry.attributes.position.needsUpdate = true;
+
+  updatePi(circleCount, totalCount);
+  
+  renderer.render( scene, camera );
+}
+
+function updatePi(circle, square) {
+  $('#circle').text(circle);
+  $('#square').text(square);
+  $('#pi').text((4 * circle / square).toFixed(10));
+}
+    </script>
+  </body>
+</html>
