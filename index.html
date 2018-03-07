@@ -26,35 +26,37 @@
   <body>
     <div id="container"></div>
     <div id="info">monte carlo pi calculation in webgl by Eve <br/>
-      pi: <span id="pi"></span>, circlePoints: <span id="circle"></span>, squarePoints: <span id="square"></span><br/>
-      pi = 4 * circlePoints / squarePoints
+      pi: <span id="pi"></span>, spherePoints: <span id="sphere"></span>, cubePoints: <span id="cube"></span><br/>
+      pi = 6 * spherePoints / cubePoints
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 
     <script>
-var RADIUS = 200;
-var MAX_PARTICLES = 5000000;
-var COUNT_PER_LOOP = 1000;
+var RADIUS = 100;
+var MAX_PARTICLES = 1000000;
+var COUNT_PER_LOOP = 100;
+var THETA_INCREMENT = 0.02;
+var CAMERA_MULTIPLIER = 4.25;
 var renderer, scene, camera;
 
 var raycaster, intersects;
 var mouse, INTERSECTED;
 
-var circleCount = 0;
-var squareCount = 0;
+var sphereCount = 0;
+var cubeCount = 0;
 var totalCount = 0;
 
-var circleGeometry = new THREE.BufferGeometry();
-var circlePositions = new Float32Array( MAX_PARTICLES * 3 );
+var sphereGeometry = new THREE.BufferGeometry();
+var spherePositions = new Float32Array( MAX_PARTICLES * 3 );
 
-var squareGeometry = new THREE.BufferGeometry();
-var squarePositions = new Float32Array( MAX_PARTICLES/2 * 3 );
+var cubeGeometry = new THREE.BufferGeometry();
+var cubePositions = new Float32Array( MAX_PARTICLES/2 * 3 );
 
-var purple = new THREE.Color( 0x880088 );
-var green = new THREE.Color( 0x008800 );
-var squareMaterial = new THREE.PointsMaterial({color:green});
-var circleMaterial = new THREE.PointsMaterial({color:purple});
+var purple = new THREE.Color( 0xff00ff );
+var green = new THREE.Color( 0x00ff00 );
+var cubeMaterial = new THREE.PointsMaterial({color:green, transparent: true, opacity: 0.35});
+var sphereMaterial = new THREE.PointsMaterial({color:purple, transparent: true, opacity: 0.5});
 
 init();
 animate();
@@ -62,23 +64,24 @@ animate();
 function addNewPoint() {
   var x = ( Math.random() * 2 - 1 ) * RADIUS;
   var y = ( Math.random() * 2 - 1 ) * RADIUS;
+  var z = ( Math.random() * 2 - 1 ) * RADIUS;
 
-  if(Math.sqrt(x * x + y * y) <= RADIUS) {
-    var i3 = circleCount * 3;
-    circlePositions[ i3 + 0 ] = x;
-    circlePositions[ i3 + 1 ] = y;
-    circlePositions[ i3 + 2 ] = 0;
-    circleCount++;
+  if(Math.sqrt(x * x + y * y + z * z) <= RADIUS) {
+    var i3 = sphereCount * 3;
+    spherePositions[ i3 + 0 ] = x;
+    spherePositions[ i3 + 1 ] = y;
+    spherePositions[ i3 + 2 ] = z;
+    sphereCount++;
   } else {
-    var i3 = squareCount * 3;
-    squarePositions[ i3 + 0 ] = x;
-    squarePositions[ i3 + 1 ] = y;
-    squarePositions[ i3 + 2 ] = 0;
-    squareCount++;
+    var i3 = cubeCount * 3;
+    cubePositions[ i3 + 0 ] = x;
+    cubePositions[ i3 + 1 ] = y;
+    cubePositions[ i3 + 2 ] = z;
+    cubeCount++;
   }
 
-  circleGeometry.setDrawRange(0, circleCount);
-  squareGeometry.setDrawRange(0, squareCount);
+  sphereGeometry.setDrawRange(0, sphereCount);
+  cubeGeometry.setDrawRange(0, cubeCount);
 
   totalCount++;
 }
@@ -94,13 +97,13 @@ function init() {
     addNewPoint();
   }
 
-  circleGeometry.addAttribute( 'position', new THREE.BufferAttribute( circlePositions, 3 ) );
-  squareGeometry.addAttribute( 'position', new THREE.BufferAttribute( squarePositions, 3 ) );
+  sphereGeometry.addAttribute( 'position', new THREE.BufferAttribute( spherePositions, 3 ) );
+  cubeGeometry.addAttribute( 'position', new THREE.BufferAttribute( cubePositions, 3 ) );
 
-  circlePoints = new THREE.Points( circleGeometry, circleMaterial );
-  squarePoints = new THREE.Points( squareGeometry, squareMaterial );
-  scene.add( circlePoints );
-  scene.add( squarePoints );
+  spherePoints = new THREE.Points( sphereGeometry, sphereMaterial );
+  cubePoints = new THREE.Points( cubeGeometry, cubeMaterial );
+  scene.add( spherePoints );
+  scene.add( cubePoints );
 
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -120,7 +123,7 @@ function onWindowResize() {
 }
 
 function animate() {
-  if(circleCount < MAX_PARTICLES) {
+  if(sphereCount < MAX_PARTICLES) {
     requestAnimationFrame( animate );
   }
   render();
@@ -130,8 +133,8 @@ var theta = 0;
 
 function render() {
 
-  theta += 0.1;
-  var radius = RADIUS * 2.5;
+  theta += THETA_INCREMENT;
+  var radius = RADIUS * CAMERA_MULTIPLIER;
   camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
   camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
   camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
@@ -142,18 +145,18 @@ function render() {
     addNewPoint();
   }
 
-  circleGeometry.attributes.position.needsUpdate = true;
-  squareGeometry.attributes.position.needsUpdate = true;
+  sphereGeometry.attributes.position.needsUpdate = true;
+  cubeGeometry.attributes.position.needsUpdate = true;
 
-  updatePi(circleCount, totalCount);
+  updatePi(sphereCount, totalCount);
   
   renderer.render( scene, camera );
 }
 
-function updatePi(circle, square) {
-  $('#circle').text(circle);
-  $('#square').text(square);
-  $('#pi').text((4 * circle / square).toFixed(10));
+function updatePi(sphere, cube) {
+  $('#sphere').text(sphere);
+  $('#cube').text(cube);
+  $('#pi').text((6 * sphere / cube).toFixed(10));
 }
     </script>
   </body>
