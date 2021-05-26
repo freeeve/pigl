@@ -1,1 +1,11 @@
-
+{
+  "name": "pigl",
+  "version": "0.0.1",
+  "devDependencies": {
+    "awesome-typescript-loader": "^4.0.1",
+    "source-map-loader": "^0.2.3",
+    "typescript": "^2.7.2",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.10"
+  }
+}

@@ -28,27 +28,6 @@
     init();
     animate();
 
-    var mobius = function ( u, t, optionalTarget ) {
-
-        var result = optionalTarget || new THREE.Vector3();
-
-        // flat mobius strip
-        // http://www.wolframalpha.com/input/?i=M%C3%B6bius+strip+parametric+equations&lk=1&a=ClashPrefs_*Surface.MoebiusStrip.SurfaceProperty.ParametricEquations-
-        u = u - 0.5;
-        var v = 2 * Math.PI * t;
-
-        var x, y, z;
-
-        var a = 2;
-
-        x = Math.cos( v ) * ( a + u * Math.cos( v / 2 ) );
-        y = Math.sin( v ) * ( a + u * Math.cos( v / 2 ) );
-        z = u * Math.sin( v / 2 );
-
-        return result.set( x, y, z );
-
-    };
-
     function addNewPoly(scene, theta, startRadius, count) {
 
         console.log(theta, startRadius, count);
